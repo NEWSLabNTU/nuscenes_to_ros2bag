@@ -51,13 +51,15 @@ def write_scene(nusc, nusc_can, scene, output_path):
     centerlines_msg = get_centerline_markers(nusc, scene, nusc_map, stamp)
     writer.write('/semantic_map', serialize_message(centerlines_msg), to_nano(stamp))
 
+    writer.write('/clock', serialize_message(stamp), to_nano(stamp))
+
     while cur_sample is not None:
         
         sample_lidar = nusc.get("sample_data", cur_sample["data"]["LIDAR_TOP"])
         ego_pose = nusc.get("ego_pose", sample_lidar["ego_pose_token"])
         stamp = get_time(ego_pose)
 
-
+        writer.write('/clock', serialize_message(stamp), to_nano(stamp))
         # write CAN messages to /pose, /odom, and /diagnostics
         can_msg_events = []
         for i in range(len(can_parsers)):
@@ -165,6 +167,7 @@ def write_scene(nusc, nusc_can, scene, output_path):
         non_keyframe_sensor_msgs.sort(key=lambda x: x[0])
         for (_, topic, msg) in non_keyframe_sensor_msgs:
             writer.write(topic, serialize_message(msg), to_nano(msg.header.stamp))
+            writer.write('/clock', serialize_message(msg.header.stamp), to_nano(msg.header.stamp))
         # move to the next sample
         cur_sample = nusc.get("sample", cur_sample["next"]) if cur_sample.get("next") != "" else None
 
@@ -185,7 +188,7 @@ def convert_all(
     nusc_can: NuScenesCanBus,
     selected_scenes,
 ):
-    nusc.list_scenes()
+    # nusc.list_scenes()
     for scene in nusc.scene:
         scene_name = scene["name"]
         if selected_scenes is not None and scene_name not in selected_scenes:
@@ -207,7 +210,7 @@ def main():
     parser.add_argument(
         "--dataset-name",
         "-n",
-        default=["v1.0-mini"],
+        default=[],
         nargs="+",
         help="dataset to convert",
     )

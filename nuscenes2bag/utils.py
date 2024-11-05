@@ -4,11 +4,13 @@ import rclpy
 from rclpy.duration import Duration
 from rclpy.serialization import serialize_message
 
+from rosgraph_msgs.msg import Clock
 from std_msgs.msg import String, ColorRGBA
 from sensor_msgs.msg import CameraInfo, CompressedImage, Imu, NavSatFix, PointCloud2, PointField
 from nav_msgs.msg import OccupancyGrid, Odometry
 from builtin_interfaces.msg import Time 
-from pypcd import numpy_pc2, pypcd
+# from pypcd import numpy_pc2, pypcd
+import pypcd4
 from visualization_msgs.msg import ImageMarker, Marker, MarkerArray
 from geometry_msgs.msg import Point, Pose, PoseStamped, Transform, TransformStamped
 from tf2_msgs.msg import TFMessage
@@ -30,6 +32,9 @@ from pyquaternion import Quaternion
 import rosbag2_py
 import math
 from PIL import Image
+import numpy as np
+import cv2
+from cv_bridge import CvBridge
 
 class Collector:
     """
@@ -118,6 +123,9 @@ def create_topics(nusc, scene, writer):
 
     writer.create_topic(rosbag2_py.TopicMetadata(
         name="/diagnostics", type="diagnostic_msgs/msg/DiagnosticArray", serialization_format="cdr"
+    ))
+    writer.create_topic(rosbag2_py.TopicMetadata(
+        name="/clock", type="rosgraph_msgs/msg/Clock", serialization_format="cdr"
     ))
 
 def get_num_sample_data(nusc: NuScenes, scene):

@@ -2,8 +2,10 @@ from utils import *
 
 def get_radar(data_path, sample_data, frame_id):
     pc_filename = data_path / sample_data['filename']
-    pc = pypcd.PointCloud.from_path(pc_filename)
-    msg = numpy_pc2.array_to_pointcloud2(pc.pc_data)
+    # pc = pypcd.PointCloud.from_path(pc_filename)
+    pc = pypcd4.PointCloud.from_path(pc_filename)
+    # msg = numpy_pc2.array_to_pointcloud2(pc.pc_data)
+    msg = pc.to_msg()
     msg.header.frame_id = frame_id
     msg.header.stamp = get_time(sample_data)
     return msg
@@ -36,9 +38,13 @@ def get_lidar(data_path, sample_data, frame_id):
 
 def get_camera(data_path, sample_data, frame_id):
     jpg_filename = data_path / sample_data['filename']
-    msg = CompressedImage()
+    camera_image = np.array(cv2.imread(jpg_filename))
+    bridge = CvBridge()
+    msg = CompressedImage() 
+    # msg = bridge.cv2_to_imgmsg(camera_image,"bgr8")
     msg.header.frame_id = frame_id
     msg.header.stamp = get_time(sample_data)
+    
     msg.format = "jpeg"
     with open(jpg_filename, 'rb') as jpg_file:
         msg.data = jpg_file.read()
@@ -61,7 +67,10 @@ def get_camera_info(nusc, sample_data, frame_id):
     msg_info.k[6] = calib['camera_intrinsic'][2][0]
     msg_info.k[7] = calib['camera_intrinsic'][2][1]
     msg_info.k[8] = calib['camera_intrinsic'][2][2]
-    
+    msg_info.distortion_model='plumb_bob'
+
+    msg_info.d = [0.0, 0.0, 0.0, 0.0, 0.0]
+
     msg_info.r[0] = 1
     msg_info.r[3] = 1
     msg_info.r[6] = 1
